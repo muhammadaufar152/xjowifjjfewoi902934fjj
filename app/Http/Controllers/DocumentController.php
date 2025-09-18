@@ -54,7 +54,14 @@ class DocumentController extends Controller
         // Ekspresi SQL untuk menormalkan kolom status (hapus spasi/tab/CRLF dan lowercase)
         $statusExpr = "LOWER(TRIM(REPLACE(REPLACE(REPLACE(IFNULL(status,''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '')))";
 
-        $q = Document::with(['downloads.user', 'relatedVersions', 'parent.relatedVersions']);
+        // Mengambil ID dari dokumen yang paling terbaru untuk setiap nomor_document
+        $latestIds = Document::select('nomor_document', DB::raw('MAX(id) as id'))
+                            ->groupBy('nomor_document');
+
+        $q = Document::with(['downloads.user', 'relatedVersions', 'parent.relatedVersions'])
+                     ->joinSub($latestIds, 'latest_docs', function ($join) {
+                         $join->on('documents.id', '=', 'latest_docs.id');
+                     });
 
         // Filter STATUS
         if ($filters['status']) {
@@ -63,30 +70,30 @@ class DocumentController extends Controller
 
             $q->where(function ($qq) use ($alts, $norm, $statusExpr) {
                 foreach ($alts as $s) {
-                    $qq->orWhereRaw("$statusExpr = ?", [$norm($s)]);
+                    $qq->orWhereRaw("documents.$statusExpr = ?", [$norm($s)]);
                 }
             });
         }
 
         // Filter SIKLUS BISNIS
         if ($filters['siklus']) {
-            $q->where('siklus_bisnis', $filters['siklus']);
+            $q->where('documents.siklus_bisnis', $filters['siklus']);
         }
 
         // Filter JENIS DOKUMEN
         if ($filters['jenis']) {
-            $q->where('jenis_document', $filters['jenis']);
+            $q->where('documents.jenis_document', $filters['jenis']);
         }
 
         // Pencarian global (nama/no dokumen)
         if ($filters['q']) {
             $q->where(function ($qq) use ($filters) {
-                $qq->where('nama_document', 'like', '%'.$filters['q'].'%')
-                   ->orWhere('nomor_document', 'like', '%'.$filters['q'].'%');
+                $qq->where('documents.nama_document', 'like', '%'.$filters['q'].'%')
+                   ->orWhere('documents.nomor_document', 'like', '%'.$filters['q'].'%');
             });
         }
 
-        $documents = $q->orderByDesc('created_at')->get();
+        $documents = $q->orderByDesc('documents.created_at')->get();
 
         return view('pages.document.index', [
             'documents' => $documents,
@@ -190,19 +197,14 @@ class DocumentController extends Controller
         }
 
         // buat record versi baru (parent_id terjaga)
-        Document::create([
-            'nama_document'          => $request->nama_document,
-            'nomor_document'         => $request->nomor_document,
-            'tanggal_terbit'         => now(),
-            'siklus_bisnis'          => $request->siklus_bisnis,
-            'proses_bisnis'          => $request->proses_bisnis,
-            'business_process_owner' => $request->input('business_process_owner') ?? 'TIDAK ADA',
-            'jenis_document'         => $request->jenis_document,
-            'version'                => $request->version,
-            'additional_file'        => $filePath,
-            'parent_id'              => $old->parent_id ?? $old->id,
-            'created_by'             => auth()->id(),
-        ]);
+        Document::create(array_merge(
+            $request->except('additional_file'),
+            [
+                'additional_file' => $filePath,
+                'parent_id'       => $old->parent_id ?? $old->id,
+                'created_by'      => auth()->id(),
+            ]
+        ));
 
         return redirect()->route('document')->with('success', 'Versi baru berhasil ditambahkan.');
     }
