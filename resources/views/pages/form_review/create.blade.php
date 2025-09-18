@@ -1,187 +1,175 @@
 @extends('layouts.app-document')
 
 @section('content')
-<div class="container mt-4">
-  <h3 class="fw-bold mb-4">Tambah Dokumen</h3>
+<div class="container-fluid">
+    <div class="row justify-content-center mt-4">
+        <div class="col-10 bg-white rounded p-4">
+            <h4 class="fw-bold text-center mb-4">TAMBAH FORM REVIEW</h4>
 
-  @if ($errors->any())
-    <div class="alert alert-danger">
-      <ul class="mb-0">
-        @foreach ($errors->all() as $error)
-          <li>{{ $error }}</li>
-        @endforeach
-      </ul>
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Terjadi kesalahan!</strong>
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('form_review.store') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+
+                <!-- Hidden bpo_id -->
+                <input type="hidden" name="bpo_id" value="{{ auth()->user()->id }}">
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nama Pemohon / BPO</label>
+                        <input type="text" class="form-control" value="{{ auth()->user()->name }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tanggal Masuk</label>
+                        <input type="date"
+                               class="form-control @error('tanggal_masuk') is-invalid @enderror"
+                               name="tanggal_masuk"
+                               value="{{ old('tanggal_masuk', date('Y-m-d')) }}">
+                        @error('tanggal_masuk')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jenis Permohonan</label>
+                    <select
+                        id="jenis_permohonan"
+                        class="form-select @error('jenis_permohonan') is-invalid @enderror"
+                        name="jenis_permohonan">
+                        <option value="">Pilih Jenis</option>
+                        <option value="Baru"   {{ old('jenis_permohonan') == 'Baru'   ? 'selected' : '' }}>Review Dokumen Baru</option>
+                        <option value="Revisi" {{ old('jenis_permohonan') == 'Revisi' ? 'selected' : '' }}>Review Dokumen Eksisting</option>
+                    </select>
+                    @error('jenis_permohonan')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Latar Belakang</label>
+                    <textarea class="form-control @error('latar_belakang') is-invalid @enderror" name="latar_belakang" rows="3">{{ old('latar_belakang') }}</textarea>
+                    @error('latar_belakang')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Usulan Revisi</label>
+                    <textarea class="form-control @error('usulan_revisi') is-invalid @enderror" name="usulan_revisi" rows="3">{{ old('usulan_revisi') }}</textarea>
+                    @error('usulan_revisi')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                {{-- === POSISI DITUKAR: Klasifikasi Siklus lebih dulu, lalu Jenis Dokumen === --}}
+                <div class="mb-3">
+                    <label class="form-label">Klasifikasi Siklus</label>
+                    <select class="form-select" name="klasifikasi_siklus">
+                        <option value="">Pilih Siklus Bisnis</option>
+                        @foreach([
+                            'Revenue', 'Cost', 'Tax', 'Procurement & Asset Management',
+                            'Financial Reporting', 'Treasury', 'Planning & System Management',
+                            'General Affair', 'IT Management'
+                        ] as $siklus)
+                            <option value="{{ $siklus }}" {{ old('klasifikasi_siklus') == $siklus ? 'selected' : '' }}>{{ $siklus }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jenis Dokumen</label>
+                    <select class="form-select" name="jenis_dokumen">
+                        <option value="">Pilih Jenis</option>
+                        @foreach(['Bispro', 'Prosedur', 'Form', 'IK'] as $jenis)
+                            <option value="{{ $jenis }}" {{ old('jenis_dokumen') == $jenis ? 'selected' : '' }}>{{ $jenis }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- === POSISI DITUKAR: No Dokumen lebih dulu daripada Nama Dokumen === --}}
+                <div class="mb-3">
+                    <label class="form-label">No Dokumen</label>
+                    <input type="text" id="no_dokumen" class="form-control" name="no_dokumen" value="{{ old('no_dokumen') }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nama Dokumen</label>
+                    <input type="text" id="nama_dokumen" class="form-control" name="nama_dokumen" value="{{ old('nama_dokumen') }}">
+                </div>
+
+                {{-- Level Dokumen di-hide (tetap ada & terkirim) --}}
+                <div class="mb-3 d-none">
+                    <label class="form-label">Level Dokumen</label>
+                    <input type="text" id="level_dokumen" class="form-control" name="level_dokumen" value="{{ old('level_dokumen') }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Perihal Review</label>
+                    <input type="text" class="form-control @error('perihal') is-invalid @enderror" name="perihal" value="{{ old('perihal') }}">
+                    @error('perihal')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Upload Lampiran (draft/final)</label>
+                    <input type="file" class="form-control @error('lampiran') is-invalid @enderror" name="lampiran">
+                    @error('lampiran')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ route('form_review.index') }}" class="btn btn-secondary">Back</a>
+                    <button type="submit" class="btn" style="background-color: #A0522D; color: white;">Save Changes</button>
+                </div>
+            </form>
+        </div>
     </div>
-  @endif
-
-
-  <form action="{{ route('document.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-
-    <div class="mb-3">
-      <label for="nomor">Nomor Document</label>
-      <input type="text" class="form-control" id="nomor" name="nomor_document" required>
-      <small id="nomorFeedback" class="text-danger d-none"></small>
-
-      @error('nomor_document')
-        <small class="text-danger">{{ $message }}</small>
-      @enderror
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label for="nama">Nama Document</label>
-        <input type="text" class="form-control" id="nama" name="nama_document" required>
-      </div>
-      <div class="col-md-6">
-        <label for="tanggal">Tanggal Terbit</label>
-        <input type="date" class="form-control" id="tanggal" name="tanggal_terbit" required>
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label for="siklus">Siklus Bisnis</label>
-        <select name="business_cycle_id" class="form-control" required>
-          <option value="" disabled selected>Pilih Siklus Bisnis</option>
-          @foreach($businessCycles as $cycle)
-            <option value="{{ $cycle->id }}">{{ $cycle->nama }}</option>
-          @endforeach
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label for="proses">Proses Bisnis</label>
-        <select name="business_process_id" class="form-control" required>
-          <option value="" disabled selected>Pilih Proses Bisnis</option>
-          @foreach($businessProcesses as $process)
-            <option value="{{ $process->id }}">{{ $process->nama }}</option>
-          @endforeach
-        </select>
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label for="bpo">Business Process Owner</label>
-        <select name="business_process_owner_id" id="bpo_field" class="form-control" required>
-          <option value="" disabled selected>Pilih Business Process Owner</option>
-          @foreach($businessProcessOwners as $owner)
-            <option value="{{ $owner->id }}">{{ $owner->nama }}</option>
-          @endforeach
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label for="jenis">Jenis Document</label>
-        <select name="document_type_id" id="jenis_document" class="form-control" required>
-          <option value="" disabled selected>Pilih Jenis Dokumen</option>
-          <option value="1">Bispro Level 2</option>
-          <option value="2">Prosedur</option>
-          <option value="3">Instruksi Kerja</option>
-          <option value="4">Form</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="mb-3">
-      <label for="version">Version</label>
-      <input type="text" name="version" class="form-control" placeholder="Contoh: 1.0" required>
-    </div>
-
-    <div class="mb-3">
-      <label for="file">Additional File</label>
-      <input type="file" class="form-control" id="file" name="additional_file" accept=".pdf,.doc,.docx,.zip,.rar">
-      <small class="text-muted d-block mt-1">
-        Maksimal ukuran file <strong>50 MB</strong>. 
-        Gunakan format <code>.pdf</code>, <code>.doc</code>, <code>.docx</code>, <code>.zip</code>, atau <code>.rar</code>.
-      </small>
-      <small>
-        <div id="file-error" class="text-danger mt-1" style="display:none;"></div>
-      </small>
-    </div>
-
-    <div class="d-flex justify-content-between">
-      <a href="{{ route('document') }}" class="btn btn-secondary">Back</a>
-      <button type="submit" class="btn btn-success">Save Change</button>
-    </div>
-  </form>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{{-- Freeze fields saat "Review Dokumen Baru" --}}
 <script>
-  $(function () {
-    const $jenis = $('#jenis_document');
-    const $bpoSelect = $('#bpo_field');
+document.addEventListener('DOMContentLoaded', function () {
+  const jenis   = document.getElementById('jenis_permohonan'); // "Baru" / "Revisi"
+  const nama    = document.getElementById('nama_dokumen');
+  const nomor   = document.getElementById('no_dokumen');
+  const level   = document.getElementById('level_dokumen');
 
-    function toggleBPO() {
-      const selectedJenis = $jenis.val();
+  if (!jenis || !nama || !nomor || !level) return;
 
-      if (selectedJenis === '1') { // Asumsi ID untuk "Bispro Level 2" adalah 1
-        $bpoSelect.prop('disabled', true).val('');
-      } else {
-        $bpoSelect.prop('disabled', false);
-      }
-    }
+  // Freeze SAAT pilihan "Review Dokumen Baru"
+  const mustFreeze = () => {
+    const v = (jenis.value || '').toLowerCase().trim();                       // ex: "baru"
+    const t = (jenis.options[jenis.selectedIndex]?.text || '').toLowerCase(); // ex: "review dokumen baru"
+    return v === 'baru' || t.includes('baru');
+  };
 
-    $jenis.on('change', toggleBPO);
-    toggleBPO();
-  });
+  // Pakai readOnly supaya value tetap terkirim ke server
+  const setFreeze = (on) => {
+    [nama, nomor, level].forEach(el => {
+      el.readOnly = on;
+      el.classList.toggle('bg-light', on);
+      el.classList.toggle('text-muted', on);
+      if (on) el.setAttribute('tabindex','-1'); else el.removeAttribute('tabindex');
+    });
+  };
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const fileInput = document.getElementById("file");
-    const errorDiv = document.getElementById("file-error");
+  const apply = () => setFreeze(mustFreeze());
 
-    if (fileInput) {
-      fileInput.addEventListener("change", function () {
-        const file = fileInput.files[0];
-        errorDiv.style.display = "none";
-        errorDiv.textContent = "";
-        if (!file) return;
-
-        const maxSize = 50  * 1024 * 1024; // 50 MB dalam byte
-        console.log('size:' + file.size);
-        
-        if (file.size > maxSize) {
-          errorDiv.textContent = `❌ File terlalu besar (${(file.size / 1024 / 1024).toFixed(2)} MB). 
-          Silakan kompres terlebih dahulu sebelum mengunggah.`;
-          errorDiv.style.display = "block";
-          fileInput.value = ""; // reset input supaya user bisa pilih ulang
-        }
-      });
-    }
-  });
-
-  document.getElementById('nomor').addEventListener('input', function () {
-      let nomor = this.value;
-      let feedback = document.getElementById('nomorFeedback');
-
-      if (nomor.length === 0) {
-          feedback.classList.add('d-none');
-          feedback.textContent = "";
-          return;
-      }
-
-      fetch("{{ route('document.checkNomor') }}", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-              "X-CSRF-TOKEN": "{{ csrf_token() }}",
-          },
-          body: JSON.stringify({ nomor_document: nomor }),
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.exists) {
-              feedback.textContent = data.message;
-              feedback.classList.remove('d-none');
-          } else {
-              feedback.classList.add('d-none');
-              feedback.textContent = "";
-          }
-      })
-      .catch(error => console.error('Error:', error));
-  });
+  jenis.addEventListener('change', apply);
+  jenis.addEventListener('input',  apply);
+  apply(); // kondisi awal saat halaman dibuka
+});
 </script>
-
 @endsection
