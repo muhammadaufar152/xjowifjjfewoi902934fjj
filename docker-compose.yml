@@ -1,0 +1,40 @@
+services:
+    aplikasi-bispro-traefik:
+        command:
+            - --providers.docker=true
+            - --providers.docker.exposedbydefault=false
+            - --providers.docker.network=network
+            - --entrypoints.aplikasi-bispro.address=:80
+            - --accesslog.filepath=/logs/access.log
+            - --accesslog.bufferingsize=100
+            - --log.level=INFO
+        image: traefik:2.10.5
+        labels:
+            - "traefik.enable=true"
+        networks:
+            - network
+        ports:
+            - "${TRAEFIK_APP_PORT:-80}:80"
+        restart: always
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ~/traefik/logs:/logs:rw
+    aplikasi-bispro-app:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        image: aplikasi-bispro-app:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.aplikasi-bispro.rule=${TRAEFIK_HTTP_ROUTERS:-Host(`localhost`)}"
+            - "traefik.http.routers.aplikasi-bispro.entrypoints=aplikasi-bispro"
+            - "traefik.http.services.aplikasi-bispro.loadbalancer.server.port=80"
+        networks:
+            - network
+        restart: always
+        user: "www-data:www-data"
+        volumes:
+            - ./storage:/var/www/html/storage
+networks:
+    network:
+        driver: bridge
