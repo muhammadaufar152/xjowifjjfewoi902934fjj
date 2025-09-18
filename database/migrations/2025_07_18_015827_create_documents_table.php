@@ -11,10 +11,19 @@ return new class extends Migration {
             $table->string('nama_document');
             $table->string('nomor_document');
             $table->date('tanggal_terbit');
-            $table->string('siklus_bisnis');
-            $table->string('proses_bisnis');
-            $table->string('business_process_owner');
-            $table->string('jenis_document');
+            $table->foreignId('business_cycle_id')
+              ->constrained('business_cycles')
+              ->cascadeOnDelete();
+
+            $table->foreignId('business_process_id')
+              ->constrained('business_processes')
+              ->cascadeOnDelete();
+
+            $table->integer('business_process_owner_id');
+            $table->foreignId('document_type_id')
+              ->constrained('document_types')
+              ->cascadeOnDelete();
+              
             $table->string('status')->nullable();
             $table->string('version')->nullable();
             $table->string('additional_file')->nullable();

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Document extends Model
 {
@@ -15,7 +18,7 @@ class Document extends Model
         'tanggal_terbit',
         'siklus_bisnis',
         'proses_bisnis',
-        'business_process_owner',
+        'business_process_owner_id',
         'jenis_document',
         'status',
         'version',
@@ -23,7 +26,28 @@ class Document extends Model
         'parent_id',
         'created_by',
     ];
-    // Dokumen induk jika ini adalah versi revisi
+
+    // --- Konstanta Status (mirip ActionItem) ---
+    public const ST_DRAFT      = 'Draft';
+    public const ST_PROGRESS   = 'Progress';
+    public const ST_REQ_CLOSE  = 'Request Close';
+    public const ST_CLOSED     = 'Closed';
+    public const ST_REJECTED   = 'Rejected';
+    public const ST_CANCELLED  = 'Cancelled';
+
+    public static function statuses(): array
+    {
+        return [
+            self::ST_DRAFT,
+            self::ST_PROGRESS,
+            self::ST_REQ_CLOSE,
+            self::ST_CLOSED,
+            self::ST_REJECTED,
+            self::ST_CANCELLED,
+        ];
+    }
+
+    // --- Relasi ---
     public function parent()
     {
         return $this->belongsTo(Document::class, 'parent_id');
@@ -44,6 +68,21 @@ class Document extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    // Relasi ke DocumentStep (mirip ActionItem::reviewSteps)
+    public function documentSteps(): HasMany
+    {
+        return $this->hasMany(DocumentStep::class)->ordered();
+    }
+
+    // --- Helper untuk cek apakah semua step sudah disetujui ---
+    public function allStepsApproved(): bool
+    {
+        return ! $this->documentSteps()
+            ->where('status', '!=', DocumentStep::STATUS_APPROVED)
+            ->exists();
+    }
+
+    // --- Scopes ---
     public function scopeOnlyLatest(Builder $q): Builder
     {
         return $q->whereIn('id', function ($sub) {
@@ -66,4 +105,39 @@ class Document extends Model
         });
     }
 
+    public function bpo()
+    {
+        return $this->belongsTo(
+            related: BusinessProcessOwner::class,
+            foreignKey: 'business_process_owner_id',
+            ownerKey: 'id'
+        );
+    }
+    
+    public function businessCycle()
+    {
+        return $this->belongsTo(
+            related: BusinessCycle::class,
+            foreignKey: 'business_cycle_id',
+            ownerKey: 'id'
+        );
+    }
+
+    public function businessProcess()
+    {
+        return $this->belongsTo(
+            related: BusinessProcess::class,
+            foreignKey: 'business_process_id',
+            ownerKey: 'id'
+        );
+    }
+    
+    public function documentType()
+    {
+        return $this->belongsTo(
+            related: DocumentType::class,
+            foreignKey: 'document_type_id',
+            ownerKey: 'id'
+        );
+    }
 }

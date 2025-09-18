@@ -64,37 +64,16 @@
         </div>
 
         <div class="row mb-3">
-          <div class="col-md-6">
-            <label for="bpo">Business Process Owner</label>
-            <select id="bpo_field" class="form-control" disabled>
-              <option value="" disabled>Pilih Business Process Owner</option>
-              <option value="FINANCE" {{ $document->business_process_owner == 'FINANCE' ? 'selected' : '' }}>FINANCE</option>
-              <option value="HUMAN CAPITAL MANAGEMENT" {{ $document->business_process_owner == 'HUMAN CAPITAL MANAGEMENT' ? 'selected' : '' }}>HUMAN CAPITAL MANAGEMENT</option>
-              <option value="SERVICE DELIVERY" {{ $document->business_process_owner == 'SERVICE DELIVERY' ? 'selected' : '' }}>SERVICE DELIVERY</option>
-              <option value="NETWORK OPERATION" {{ $document->business_process_owner == 'NETWORK OPERATION' ? 'selected' : '' }}>NETWORK OPERATION</option>
-              <option value="CORPORATE SECRETARY" {{ $document->business_process_owner == 'CORPORATE SECRETARY' ? 'selected' : '' }}>CORPORATE SECRETARY</option>
-              <option value="ASSET, PROCUREMENT & LOGISTICS" {{ $document->business_process_owner == 'ASSET, PROCUREMENT & LOGISTICS' ? 'selected' : '' }}>ASSET, PROCUREMENT & LOGISTICS</option>
-              <option value="AUDIT & RISK MANAGEMENT" {{ $document->business_process_owner == 'AUDIT & RISK MANAGEMENT' ? 'selected' : '' }}>AUDIT & RISK MANAGEMENT</option>
-              <option value="TRANSFORMATION" {{ $document->business_process_owner == 'TRANSFORMATION' ? 'selected' : '' }}>TRANSFORMATION</option>
-              <option value="BILLING & COLLECTION" {{ $document->business_process_owner == 'BILLING & COLLECTION' ? 'selected' : '' }}>BILLING & COLLECTION</option>
-              <option value="PRODUCT DEVELOPMENT & PROJECT MANAGEMENT" {{ $document->business_process_owner == 'PRODUCT DEVELOPMENT & PROJECT MANAGEMENT' ? 'selected' : '' }}>PRODUCT DEVELOPMENT & PROJECT MANAGEMENT</option>
-              <option value="STRATEGIC BUSINESS DEVELOPMENT" {{ $document->business_process_owner == 'STRATEGIC BUSINESS DEVELOPMENT' ? 'selected' : '' }}>STRATEGIC BUSINESS DEVELOPMENT</option>
-              <option value="SYSTEM PLANNING & MANAGEMENT" {{ $document->business_process_owner == 'SYSTEM PLANNING & MANAGEMENT' ? 'selected' : '' }}>SYSTEM PLANNING & MANAGEMENT</option>
-              <option value="COMMERCE SEGMENT 1" {{ $document->business_process_owner == 'COMMERCE SEGMENT 1' ? 'selected' : '' }}>COMMERCE SEGMENT 1</option>
-              <option value="COMMERCE SEGMENT 2" {{ $document->business_process_owner == 'COMMERCE SEGMENT 2' ? 'selected' : '' }}>COMMERCE SEGMENT 2</option>
-              <option value="COMMERCE SEGMENT 3" {{ $document->business_process_owner == 'COMMERCE SEGMENT 3' ? 'selected' : '' }}>COMMERCE SEGMENT 3</option>
-              <option value="SATELIT OPERATION" {{ $document->business_process_owner == 'SATELIT OPERATION' ? 'selected' : '' }}>SATELIT OPERATION</option>
-              <option value="DATACOM, ADJACENT SERVICE & IT" {{ $document->business_process_owner == 'DATACOM, ADJACENT SERVICE & IT' ? 'selected' : '' }}>DATACOM, ADJACENT SERVICE & IT</option>
-              <option value="DIREKTORAT OPERASI" {{ $document->business_process_owner == 'DIREKTORAT OPERASI' ? 'selected' : '' }}>DIREKTORAT OPERASI</option>
-              <option value="INTERNAL AUDIT & RISK MANAGEMENT" {{ $document->business_process_owner == 'INTERNAL AUDIT & RISK MANAGEMENT' ? 'selected' : '' }}>INTERNAL AUDIT & RISK MANAGEMENT</option>
-              <option value="GOVERNMENT & REGIONAL SERVICE" {{ $document->business_process_owner == 'GOVERNMENT & REGIONAL SERVICE' ? 'selected' : '' }}>GOVERNMENT & REGIONAL SERVICE</option>
-              <option value="MINING, MARITIME & AVIATION SERVICE" {{ $document->business_process_owner == 'MINING, MARITIME & AVIATION SERVICE' ? 'selected' : '' }}>MINING, MARITIME & AVIATION SERVICE</option>
-              <option value="OTHER LISENCE OPERATOR SERVICE" {{ $document->business_process_owner == 'OTHER LISENCE OPERATOR SERVICE' ? 'selected' : '' }}>OTHER LISENCE OPERATOR SERVICE</option>
-              <option value="DIREKTORAT KOMERSIAL" {{ $document->business_process_owner == 'DIREKTORAT KOMERSIAL' ? 'selected' : '' }}>DIREKTORAT KOMERSIAL</option>
-              <option value="ENTERPRISE SERVICE" {{ $document->business_process_owner == 'ENTERPRISE SERVICE' ? 'selected' : '' }}>ENTERPRISE SERVICE</option>
-              <option value="REGIONAL & CONSUMER SERVICE" {{ $document->business_process_owner == 'REGIONAL & CONSUMER SERVICE' ? 'selected' : '' }}>REGIONAL & CONSUMER SERVICE</option>
-              <option value="GOVERNMENT SERVICE" {{ $document->business_process_owner == 'GOVERNMENT SERVICE' ? 'selected' : '' }}>GOVERNMENT SERVICE</option>
-            </select>
+      <div class="col-md-6">
+        <label for="bpo">Business Process Owner</label>
+        <select id="bpo_field" class="form-control" disabled>
+          @foreach ($bpos as $bpo)
+            <option value="{{ $bpo->id }}" 
+              {{ $document->bpo->id == $bpo->id ? 'selected' : '' }}>
+              {{ $bpo->nama }}
+            </option>
+          @endforeach
+        </select>
 
             {{-- Hidden input to actually send data --}}
             <input type="hidden" name="business_process_owner" id="bpo_hidden">

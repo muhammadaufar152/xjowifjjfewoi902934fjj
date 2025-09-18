@@ -7,6 +7,8 @@ use App\Models\FormReview;
 use App\Models\Step;
 use App\Models\Document;
 use App\Models\ActionItem;
+use App\Models\BusinessCycle;
+use App\Models\DocumentType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -177,15 +179,15 @@ class DashboardController extends Controller
         $normSql = fn($col) => "LOWER(TRIM(REPLACE(REPLACE(REPLACE(IFNULL($col,''), CHAR(13), ''), CHAR(10), ''), CHAR(9), '')))";
 
         try {
-            $byCycle = Document::selectRaw("$normSql('siklus_bisnis') AS k, COUNT(*) AS c")
-                        ->groupByRaw($normSql('siklus_bisnis'))
+            $byCycle = Document::selectRaw("$normSql('business_cycle_id') AS k, COUNT(*) AS c")
+                        ->groupByRaw($normSql('business_cycle_id'))
                         ->pluck('c', 'k')->toArray();
 
-            $byType  = Document::selectRaw("$normSql('jenis_document') AS k, COUNT(*) AS c")
-                        ->groupByRaw($normSql('jenis_document'))
+            $byType  = Document::selectRaw("$normSql('document_type_id') AS k, COUNT(*) AS c")
+                        ->groupByRaw($normSql('document_type_id'))
                         ->pluck('c', 'k')->toArray();
         } catch (\Throwable $e) {
-            $docsAgg = Document::select('siklus_bisnis', 'jenis_document')->get();
+            $docsAgg = Document::select('business_cycle_id', 'document_type_id')->get();
 
             $normalizeAgg = function ($v) {
                 $v = is_null($v) ? '' : (string)$v;
@@ -194,8 +196,8 @@ class DashboardController extends Controller
                 return strtolower($v);
             };
 
-            $byCycle = $docsAgg->pluck('siklus_bisnis')->map($normalizeAgg)->countBy()->toArray();
-            $byType  = $docsAgg->pluck('jenis_document')->map($normalizeAgg)->countBy()->toArray();
+            $byCycle = $docsAgg->pluck('business_cycle_id')->map($normalizeAgg)->countBy()->toArray();
+            $byType  = $docsAgg->pluck('document_type_id')->map($normalizeAgg)->countBy()->toArray();
         }
 
         /** ============== SUMMARY ACTION ITEM (pie + cards) ============== */
@@ -239,6 +241,9 @@ class DashboardController extends Controller
             'labels'   => ['Open','Progress','Cancel','Request Close','Closed','Pending'],
         ];
 
+        $labelMapCycle = BusinessCycle::pluck('name', 'id'); 
+        $labelMapType = DocumentType::pluck('name', 'id'); 
+        
         return view('dashboard', compact(
             'metrics',
             'myQueue',
@@ -250,7 +255,9 @@ class DashboardController extends Controller
             'recentDocuments',
             'byCycle',
             'byType',
-            'aiStats'
+            'aiStats',
+            'labelMapCycle',
+            'labelMapType'
         ));
     }
 }

@@ -44,6 +44,7 @@
               <th>Jenis Dokumen</th>
               <th>BPO</th>
               <th>Version</th>
+              <th>Status</th>
               @if($canEdit)
                 <th>History</th>
               @endif
@@ -60,6 +61,7 @@
                 <th><input name="jenis_dokumen" type="text" placeholder="Cari..." class="form-control form-control-sm" /></th>
                 <th><input name="bpo" type="text" placeholder="Cari..." class="form-control form-control-sm" /></th>
                 <th></th>
+                <th><input name="status" type="text" placeholder="Cari..." class="form-control form-control-sm" /></th>
                 @if($canEdit)
                   <th></th>
                 @endif
@@ -76,32 +78,38 @@
                 $root = $document->parent ?: $document;
 
                 // Tanggal dasar: selalu dari induk (YYYYMMDD)
-                $baseDate = optional($root->created_at)->format('Ymd');
+                $baseDate = $document->tanggal_terbit
+                  ? \Illuminate\Support\Carbon::parse($document->tanggal_terbit)->format('Ymd')
+                  : null;
 
+                // dd($baseDate);
                 // Rantai versi dari paling awal (induk) ke terbaru (urut naik)
-                $ascChain = collect([$root])
-                  ->merge(($root->relatedVersions ?? collect())->sortBy('created_at')->values());
+                // $ascChain = collect([$root])
+                //   ->merge(($root->relatedVersions ?? collect())->sortBy('created_at')->values());
 
                 // Posisi dokumen saat ini (1-based) untuk versi
-                $position = optional($ascChain)->search(fn ($d) => $d->id === $document->id);
-                $position = is_int($position) ? ($position + 1) : 1;
-                $verNo    = str_pad($position, 3, '0', STR_PAD_LEFT);
+                // $position = optional($ascChain)->search(fn ($d) => $d->id === $document->id);
+                // $position = is_int($position) ? ($position + 1) : 1;
+                // $verNo    = str_pad($position, 3, '0', STR_PAD_LEFT);
               @endphp
 
               <tr>
                 <td>{{ $document->nomor_document }}</td>
                 <td>{{ $document->nama_document }}</td>
                 <td>{{ \Carbon\Carbon::parse($document->tanggal_terbit)->format('Y-M-d') }}</td>
-                <td>{{ $document->siklus_bisnis }}</td>
+                <td>{{ $document->businessCycle->name }}</td>
                 {{-- <td>{{ $document->proses_bisnis }}</td> --}}
-                <td>{{ $document->jenis_document }}</td>
-                <td>{{ $document->business_process_owner }}</td>
-
+                <td>{{ $document->documentType->name }}</td>
+                <td>{{ $document->bpo->nama }}</td>
+                
                 {{-- Version dengan tanggal parent --}}
                 <td class="text-center">
-                  {{ $baseDate ? ($baseDate . ' - ' . $verNo) : '-' }}
+                  {{ $baseDate ? ($baseDate . '-' . $document->version) : '-' }}
                 </td>
 
+                {{-- status --}}
+                <td>{{ $document->status }}</td>
+                
                 @if($canEdit)
                 {{-- History download --}}
                 <td>
@@ -122,7 +130,7 @@
                             <ul class="list-group list-group-flush">
                               @foreach ($document->downloads as $log)
                                 <li class="list-group-item">
-                                  {{ $log->user->name }}<br>
+                                  {{ ($log->user->username . ' - ' . $log->user->name . ' - ' . strtoupper($log->user->role)) }}<br>
                                   <small class="text-muted">{{ $log->downloaded_at->format('d M Y H:i') }}</small>
                                 </li>
                               @endforeach
@@ -157,7 +165,7 @@
                       @endif
                       @if ($canEdit)
                         <li>
-                          <form action="{{ route('document.updateVersion', $document->id) }}" method="POST" onsubmit="return confirm('Yakin ingin update dokumen versi {{ ($baseDate . ' - ' . $verNo) }} ini?')">
+                          <form action="{{ route('document.updateVersion', $document->id) }}" method="POST" onsubmit="return confirm('Yakin ingin update dokumen versi {{ ($baseDate . ' - ' . $document->version) }} ini?')">
                             @csrf
                             <button class="dropdown-item" type="submit">Add Version</button>
                           </form>
@@ -214,7 +222,7 @@
                           @endphp
                           <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                              <strong>{{ $baseDateForModal }} — {{ $num }}</strong><br>
+                              <strong>{{ $baseDateForModal }} — {{ $document->version }}</strong><br>
                               <small>{{ $version->nama_document }}</small><br>
                               @if ($isLatestRow)
                                 <span class="badge bg-success">Up to date</span>

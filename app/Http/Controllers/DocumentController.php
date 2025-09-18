@@ -152,7 +152,14 @@ class DocumentController extends Controller
     public function edit($id)
     {
         $document = Document::findOrFail($id);
-        return view('pages.document.edit', compact('document'));
+
+        $bpos = DB::connection('mysql_sipatra')
+            ->table('r_subdit_legal')
+            ->join('m_organisasi', 'r_subdit_legal.m_organisasi_id', '=', 'm_organisasi.id')
+            ->select('m_organisasi.id', 'm_organisasi.nama')
+            ->get();
+
+        return view('pages.document.edit', compact('document','bpos'));
     }
 
     public function update(Request $request, $id)
@@ -320,11 +327,18 @@ class DocumentController extends Controller
             }
 
             if (auth()->check()) {
-                DocumentDownload::create([
-                    'document_id'   => $document->id,
-                    'user_id'       => auth()->id(),
-                    'downloaded_at' => now(),
-                ]);
+                $alreadyLogged = DocumentDownload::where('document_id', $document->id)
+                    ->where('user_id', auth()->id())
+                    ->where('downloaded_at', '>=', now()->subSeconds(5)) // cek 5 detik terakhir
+                    ->exists();
+
+                if (!$alreadyLogged) {
+                    DocumentDownload::create([
+                        'document_id'   => $document->id,
+                        'user_id'       => auth()->id(),
+                        'downloaded_at' => now(),
+                    ]);
+                }
             }
 
             // ===== Generate Nama File =====

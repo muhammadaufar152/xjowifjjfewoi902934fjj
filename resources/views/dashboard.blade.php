@@ -34,18 +34,18 @@
   // Jika controller belum kirim, ambil kolom minimal lalu hitung di PHP (tanpa raw SQL)
   if (empty($byCycle) || empty($byType)) {
       $docs = \App\Models\Document::query()
-          ->select('siklus_bisnis', 'jenis_document')
+          ->select('business_cycle_id', 'document_type_id')
           ->get();
 
       if (empty($byCycle)) {
-          $byCycle = $docs->pluck('siklus_bisnis')
+          $byCycle = $docs->pluck('business_cycle_id')
               ->map($normalize)
               ->countBy()
               ->toArray();
       }
 
       if (empty($byType)) {
-          $byType = $docs->pluck('jenis_document')
+          $byType = $docs->pluck('document_type_id')
               ->map($normalize)
               ->countBy()
               ->toArray();
@@ -53,17 +53,17 @@
   }
 
   // Label map -> pretty case
-  $labelMapCycle = [
-    'revenue'=>'Revenue','cost'=>'Cost','tax'=>'Tax',
-    'procurement & asset management'=>'Procurement & Asset Management',
-    'financial reporting'=>'Financial Reporting','treasury'=>'Treasury',
-    'planning & system management'=>'Planning & System Management',
-    'general affair'=>'General Affair','it management'=>'IT Management',
-    // 'assurance'=>'Assurance','fulfillment'=>'Fulfillment',
-  ];
-  $labelMapType  = [
-    'bispro'=>'Bispro (L2, L3, Dst)','prosedur'=>'Prosedur','instruksi kerja'=>'Instruksi Kerja','form'=>'Form',
-  ];
+  // $labelMapCycle = [
+  //   'revenue'=>'Revenue','cost'=>'Cost','tax'=>'Tax',
+  //   'procurement & asset management'=>'Procurement & Asset Management',
+  //   'financial reporting'=>'Financial Reporting','treasury'=>'Treasury',
+  //   'planning & system management'=>'Planning & System Management',
+  //   'general affair'=>'General Affair','it management'=>'IT Management',
+  //   // 'assurance'=>'Assurance','fulfillment'=>'Fulfillment',
+  // ];
+  // $labelMapType  = [
+  //   'bispro'=>'Bispro (L2, L3, Dst)','prosedur'=>'Prosedur','instruksi kerja'=>'Instruksi Kerja','form'=>'Form',
+  // ];
 
   // Bentuk list terurut desc + info label utk filter
   // ===============================
@@ -136,13 +136,13 @@
 
   // ---------- AGREGASI MATRIX (Siklus × Jenis) ----------
   $docsAll = \App\Models\Document::query()
-      ->select('siklus_bisnis','jenis_document')
+      ->select('business_cycle_id','document_type_id')
       ->get();
 
   $matrix = [];
   foreach ($docsAll as $d) {
-      $s = $normalize($d->siklus_bisnis ?? '');
-      $j = $normalize($d->jenis_document ?? '');
+      $s = $normalize($d->business_cycle_id ?? '');
+      $j = $normalize($d->document_type_id ?? '');
       $s = $s === '' ? '-' : $s;
       $j = $j === '' ? '-' : $j;
       $matrix[$s][$j] = ($matrix[$s][$j] ?? 0) + 1;
