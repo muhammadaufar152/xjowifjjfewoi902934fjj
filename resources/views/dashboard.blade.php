@@ -169,7 +169,7 @@
       @endphp
 
       {{-- ===================== SUMMARY DOCUMENT (3 kartu) ===================== --}}
-      <div class="row g-4 mb-3">
+      {{-- <div class="row g-4 mb-3">
         {{-- Total Documents (biru) --}}
         {{-- <div class="col-12 col-md-4">
           <div class="doc-kpi doc-kpi--blue doc-kpi--link" data-nav="{{ $toAll }}">
@@ -373,7 +373,7 @@
       @endphp
 
       {{-- ===================== SUMMARY FORM REVIEW (cards only) ===================== --}}
-<div class="row g-3 mt-1">
+{{-- <div class="row g-3 mt-1">
   <div class="col-12 col-md-3">
     <div class="metric-card metric-blue p-3 h-100 fr-link" data-nav="{{ $frTarget }}" role="button" tabindex="0">
       <span class="metric-chip">{{ $wPct }}%</span>
@@ -425,10 +425,9 @@
       </div>
     </div>
   </div>
-</div>
+</div> --}}
 
-<!-- Kartu baru: Document Request (total Form Review) -->
-<div class="row g-3 mt-2">
+{{-- <div class="row g-3 mt-2">
   <div class="col-12 col-md-3">
     <div class="metric-card metric-cyan p-3 h-100 fr-link"
          data-nav="{{ route('form_review.index') }}" role="button" tabindex="0">
@@ -441,10 +440,10 @@
       </div>
     </div>
   </div>
-</div>
+</div> --}}
 
       {{-- Mini composition bar FORM REVIEW --}}
-      <div class="fr-mini mt-2 mb-3">
+      {{-- <div class="fr-mini mt-2 mb-3">
         <div class="fr-mini__bar">
           <div class="fr-mini__seg fr-mini__seg--blue"   style="width: {{ $wPct }}%"></div>
           <div class="fr-mini__seg fr-mini__seg--amber"  style="width: {{ $rPct }}%"></div>
@@ -461,10 +460,10 @@
           </div>
           <div class="small text-muted">Total: {{ $w + $r + $p + $c }}</div>
         </div>
-      </div>
+      </div> --}}
 
       {{-- CHART + QUEUE --}}
-      <div class="row g-3 mt-3">
+      {{-- <div class="row g-3 mt-3">
         <div class="col-12 col-lg-7">
           <div class="border rounded p-3 h-100 card-clip">
             <div class="small text-muted mb-2">
@@ -530,7 +529,7 @@
             @endif
           </div>
         </div>
-      </div>
+      </div> --}}
 
       {{-- ======= Guard AI + PIE ======= --}}
       @php
@@ -644,7 +643,7 @@
             </div>
 
             {{-- NEW: Pending -}}
-            <div class="col-6 col-xl-4">
+            {{-- <div class="col-6 col-xl-4">
               <div class="ai-card ai-gray ai-link p-3 h-100" data-nav="{{ $aiRoute('pending') }}" role="button" tabindex="0">
                 <div class="ai-chip">Pending</div>
                 <div class="small d-flex align-items-center mb-2">
@@ -981,7 +980,7 @@
   padding:.1rem .45rem; font-size:.73rem; border-radius:.4rem; font-weight:800; }
 .mini-kpi__num{ font-weight:800; font-size:1.35rem; line-height:1; margin-top:.2rem; }
 
-.fr-link:focus { outline: 3px solid rgba(255,255,255,.6); outline-offset: 2px; }
+.fr-link:focus { outline: 3-x solid rgba(255,255,255,.6); outline-offset: 2px; }
 
 .legend-dot{
   display:inline-block; width:10px; height:10px; border-radius:50%;
@@ -1018,7 +1017,7 @@
   border: 3px solid #f4f4f4; /* garis tegas di bawah header */
   border-radius: 10px;
   background-color: #0098DE !important;
-  background-clip: padding-box; 
+  background-clip: padding-box;
 
   /* Tambahan supaya font tidak terlalu tebal & pakai Poppins */
   font-family: 'Poppins', sans-serif;
@@ -1031,7 +1030,7 @@
 }
 
 .custom-table a:hover {
-  text-decoration: underline !important;  
+  text-decoration: underline !important;
 }
 .custom-table th {
   font-family: 'Poppins', sans-serif;

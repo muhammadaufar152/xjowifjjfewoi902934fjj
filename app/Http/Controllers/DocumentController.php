@@ -78,14 +78,19 @@ class DocumentController extends Controller
             });
         }
 
-        // Filter SIKLUS BISNIS
+        // Perbaikan: Mencari ID berdasarkan nama yang dinormalisasi
         if ($filters['siklus']) {
-            $q->where('documents.siklus_bisnis', $filters['siklus']);
+            $cycleId = BusinessCycle::whereRaw("LOWER(TRIM(name)) = ?", [$norm($filters['siklus'])])->first()?->id;
+            if ($cycleId) {
+                $q->where('documents.business_cycle_id', $cycleId);
+            }
         }
 
-        // Filter JENIS DOKUMEN
         if ($filters['jenis']) {
-            $q->where('documents.jenis_document', $filters['jenis']);
+            $typeId = DocumentType::whereRaw("LOWER(TRIM(name)) = ?", [$norm($filters['jenis'])])->first()?->id;
+            if ($typeId) {
+                $q->where('documents.document_type_id', $typeId);
+            }
         }
 
         // Pencarian global (nama/no dokumen)
