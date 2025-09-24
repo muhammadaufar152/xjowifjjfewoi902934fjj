@@ -82,6 +82,8 @@
                   ? \Illuminate\Support\Carbon::parse($document->tanggal_terbit)->format('Ymd')
                   : null;
 
+                $childCount = \App\Models\Document::where('parent_id', $root->id)->count();
+
                 // dd($baseDate);
                 // Rantai versi dari paling awal (induk) ke terbaru (urut naik)
                 // $ascChain = collect([$root])
@@ -160,16 +162,11 @@
                         </li>
                       @endif
                       <li><a class="dropdown-item" href="{{ route('document.show', $document->id) }}">View</a></li>
-                      @if ($canEdit)
+                      @if ($canEdit && $document->parent_id == null)
                         <li><a class="dropdown-item" href="{{ route('document.edit', $document->id) }}">Edit</a></li>
                       @endif
-                      @if ($canEdit)
-                        <li>
-                          <form action="{{ route('document.updateVersion', $document->id) }}" method="POST" onsubmit="return confirm('Yakin ingin update dokumen versi {{ ($baseDate . ' - ' . $document->version) }} ini?')">
-                            @csrf
-                            <button class="dropdown-item" type="submit">Add Version</button>
-                          </form>
-                        </li>
+                      @if ($canEdit && $childCount < 2)
+                        <li><a class="dropdown-item" href="{{ route('document.updateVersion', ['id' => $document->id, 'is_edit' => 0]) }}">Add Version</a></li>
                       @endif
                       @if ($document->additional_file)
                         <li><a class="dropdown-item" href="{{ route('document.download', $document->id) }}">Download PDF</a></li>
@@ -207,6 +204,7 @@
                             ->sortByDesc('created_at')
                             ->values();
 
+
                           // Tanggal dasar dari induk untuk semua baris
                           $baseDateForModal = $baseDate;
 
@@ -222,7 +220,7 @@
                           @endphp
                           <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                              <strong>{{ $baseDateForModal }} — {{ $document->version }}</strong><br>
+                              <strong>{{ $baseDateForModal }}—{{ $document->version }}</strong><br>
                               <small>{{ $version->nama_document }}</small><br>
                               @if ($isLatestRow)
                                 <span class="badge bg-success">Up to date</span>

@@ -41,7 +41,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(RoleAccess::class)
         ->name('document.edit');
     Route::put('/document/{id}', [DocumentController::class, 'update'])->name('document.update');
-    Route::post('/document/update-version/{id}', [DocumentController::class, 'updateVersion'])->name('document.updateVersion');
+    Route::get('/document/update-version/{id}/{is_edit}', [DocumentController::class, 'edit'])->name('document.updateVersion');
     Route::delete('/document/{id}', [DocumentController::class, 'destroy'])->name('document.destroy');
     Route::post('/document/check-nomor', [DocumentController::class, 'checkNomor'])->name('document.checkNomor');
 

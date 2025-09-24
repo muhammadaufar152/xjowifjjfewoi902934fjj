@@ -14,7 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // foreach ($users as $u) {
+        // $users = require database_path('seeders/users.php');
+        // $user = json_decode($users, true);
+
+        // foreach ($user as $u) {
         //     User::create([
         //         'name' => $u['name'] ?? 'no name',
         //         'username' => $u['username'],

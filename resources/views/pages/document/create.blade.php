@@ -20,7 +20,7 @@
 
     <div class="mb-3">
       <label for="nomor">Nomor Document</label>
-      <input type="text" class="form-control" id="nomor" name="nomor_document" required>
+      <input type="text" class="form-control" id="nomor" name="nomor_document" disabled required>
       <small id="nomorFeedback" class="text-danger d-none"></small>
 
       @error('nomor_document')
@@ -42,37 +42,21 @@
     <div class="row mb-3">
       <div class="col-md-6">
         <label for="siklus">Siklus Bisnis</label>
-        <select name="siklus_bisnis" class="form-control" required>
+        <select name="siklus_bisnis" id="siklus_bisnis" class="form-control" required>
           <option value="" disabled selected>Pilih Siklus Bisnis</option>
-          <option value="Revenue">Revenue</option>
-          <option value="Cost">Cost</option>
-          <option value="Tax">Tax</option>
-          <option value="Procurement & Asset Management">Procurement & Asset Management</option>
-          <option value="Financial Reporting">Financial Reporting</option>
-          <option value="Treasury">Treasury</option>
-          <option value="Planning & System Management">Planning & System Management</option>
-          <option value="General Affair">General Affair</option>
-          <option value="IT Management">IT Management</option>
+          @foreach ($business_cycles as $cycle)
+            <option value="{{ $cycle->id }}">{{ $cycle->name }}</option>
+          @endforeach
         </select>
       </div>
 
       <div class="col-md-6">
         <label for="proses">Proses Bisnis</label>
-        <select name="proses_bisnis" class="form-control" required>
-          <option value="" disabled selected>Pilih Proses Bisnis</option>
-          <option value="Fufillment">Fufillment</option>
-          <option value="Assurance">Assurance</option>
-          <option value="Billing">Billing</option>
-          <option value="Financial Management">Financial Management</option>
-          <option value="Procurement">Procurement</option>
-          <option value="Asset Management">Asset Management</option>
-          <option value="HCM">HCM</option>
-          <option value="Audit & Risk Management">Audit & Risk Management</option>
-          <option value="Strategic & Enterprise Management">Strategic & Enterprise Management</option>
-          <option value="IT Management">IT Management</option>
-          <option value="General Affair">General Affair</option>
-          <option value="Enterprise Governance">Enterprise Governance</option>
-          <option value="Performance Report">Performance Report</option>
+        <select name="proses_bisnis" id="proses_bisnis" class="form-control" required>
+          <option disabled selected>Pilih Proses Bisnis</option>
+          @foreach ($business_processes as $process)
+            <option value="{{ $process->id }}">{{ $process->name }}</option>
+          @endforeach
         </select>
       </div>
     </div>
@@ -82,32 +66,9 @@
         <label for="bpo">Business Process Owner</label>
         <select id="bpo_field" class="form-control" disabled>
           <option value="" disabled selected>Pilih Business Process Owner</option>
-          <option value="FINANCE">FINANCE</option>
-          <option value="HUMAN CAPITAL MANAGEMENT">HUMAN CAPITAL MANAGEMENT</option>
-          <option value="SERVICE DELIVERY">SERVICE DELIVERY</option>
-          <option value="NETWORK OPERATION">NETWORK OPERATION</option>
-          <option value="CORPORATE SECRETARY">CORPORATE SECRETARY</option>
-          <option value="ASSET, PROCUREMENT & LOGISTICS">ASSET, PROCUREMENT & LOGISTICS</option>
-          <option value="AUDIT & RISK MANAGEMENT">AUDIT & RISK MANAGEMENT</option>
-          <option value="TRANSFORMATION">TRANSFORMATION</option>
-          <option value="BILLING & COLLECTION">BILLING & COLLECTION</option>
-          <option value="PRODUCT DEVELOPMENT & PROJECT MANAGEMENT">PRODUCT DEVELOPMENT & PROJECT MANAGEMENT</option>
-          <option value="STRATEGIC BUSINESS DEVELOPMENT">STRATEGIC BUSINESS DEVELOPMENT</option>
-          <option value="SYSTEM PLANNING & MANAGEMENT">SYSTEM PLANNING & MANAGEMENT</option>
-          <option value="COMMERCE SEGMENT 1">COMMERCE SEGMENT 1</option>
-          <option value="COMMERCE SEGMENT 2">COMMERCE SEGMENT 2</option>
-          <option value="COMMERCE SEGMENT 3">COMMERCE SEGMENT 3</option>
-          <option value="SATELIT OPERATION">SATELIT OPERATION</option>
-          <option value="DATACOM, ADJACENT SERVICE & IT">DATACOM, ADJACENT SERVICE & IT</option>
-          <option value="DIREKTORAT OPERASI">DIREKTORAT OPERASI</option>
-          <option value="INTERNAL AUDIT & RISK MANAGEMENT">INTERNAL AUDIT & RISK MANAGEMENT</option>
-          <option value="GOVERNMENT & REGIONAL SERVICE">GOVERNMENT & REGIONAL SERVICE</option>
-          <option value="MINING, MARITIME & AVIATION SERVICE">MINING, MARITIME & AVIATION SERVICE</option>
-          <option value="OTHER LISENCE OPERATOR SERVICE">OTHER LISENCE OPERATOR SERVICE</option>
-          <option value="DIREKTORAT KOMERSIAL">DIREKTORAT KOMERSIAL</option>
-          <option value="ENTERPRISE SERVICE">ENTERPRISE SERVICE</option>
-          <option value="REGIONAL & CONSUMER SERVICE">REGIONAL & CONSUMER SERVICE</option>
-          <option value="GOVERNMENT SERVICE">GOVERNMENT SERVICE</option>
+          @foreach ($bpos as $bpo)
+            <option value="{{ $bpo->id }}">{{ $bpo->nama }}</option>
+          @endforeach
         </select>
 
         {{-- Hidden input to actually send data --}}
@@ -118,17 +79,16 @@
         <label for="jenis">Jenis Document</label>
         <select name="jenis_document" id="jenis_document" class="form-control" required>
           <option value="" disabled selected>Pilih Jenis Dokumen</option>
-          <option value="Bispro Level 2">Bispro Level 2</option>
-          <option value="Prosedur">Prosedur</option>
-          <option value="Instruksi Kerja">Instruksi Kerja</option>
-          <option value="Form">Form</option>
+          @foreach ($document_types as $type)
+            <option value="{{ $type->id }}">{{ $type->name }}</option>
+          @endforeach
         </select>
       </div>
     </div>
 
     <div class="mb-3">
       <label for="version">Version</label>
-      <input type="text" name="version" class="form-control" placeholder="Contoh: 1.0">
+      <input type="text" name="version" id="version" class="form-control" placeholder="Contoh: 001" value="001">
     </div>
 
     <div class="mb-3">
@@ -136,7 +96,8 @@
       <input type="file" class="form-control" id="file" name="additional_file" accept=".pdf,.doc,.docx,.zip,.rar">
       <small class="text-muted d-block mt-1">
         Maksimal ukuran file <strong>50 MB</strong>. 
-        Gunakan format <code>.pdf</code>, <code>.doc</code>, <code>.docx</code>, <code>.zip</code>, atau <code>.rar</code>.
+        Gunakan format <code>.pdf</code>, <code>.doc</code>, atau <code>.docx</code>
+        {{-- , <code>.zip</code>, atau <code>.rar</code>. --}}
       </small>
       <small>
         <div id="file-error" class="text-danger mt-1" style="display:none;"></div>
@@ -150,8 +111,11 @@
   </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+  let versionTimeout;
+
   $(function () {
     const $jenis = $('#jenis_document');
     const $bpoSelect = $('#bpo_field');
@@ -209,6 +173,30 @@
     }
   });
 
+  document.getElementById('version').addEventListener('input', function () {
+      clearTimeout(versionTimeout);
+
+      let version = this.value;
+
+      versionTimeout = setTimeout(() => {
+        if (version.value !== '001') {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Versi Tidak Sesuai Urutan',
+              text: 'Yakin menginputkan versi ' + version + '?',
+              showCancelButton: true,
+              confirmButtonText: 'Ya, lanjutkan',
+              cancelButtonText: 'Batal',
+              reverseButtons: true,
+          }).then((result) => {
+              if (result.dismiss === Swal.DismissReason.cancel) {
+                  this.value = '001';
+              }
+          });
+        }
+      }, 1000);
+  });
+
   document.getElementById('nomor').addEventListener('input', function () {
       let nomor = this.value;
       let feedback = document.getElementById('nomorFeedback');
@@ -239,6 +227,77 @@
       })
       .catch(error => console.error('Error:', error));
   });
+
+  document.getElementById('jenis_document').addEventListener('change', function () {
+      // ✅ Kalau sudah terisi semua, isi nomor sesuai jenis
+      let selectedOption = this.options[this.selectedIndex].text;
+      let nomorInput = document.getElementById('nomor');
+      nomorInput.disabled = true;
+
+      let kode = random3Char();
+
+      if (selectedOption === 'Prosedur') {
+          nomorInput.value = 'PRO/' + kode + '/001';
+      } 
+      if (selectedOption === 'Instruksi Kerja') {
+          nomorInput.value = 'IKA/' + kode + '/001';
+      } 
+      if (selectedOption === 'Form') {
+          nomorInput.value = 'FRM/' + kode + '/001';
+      } 
+      if (selectedOption === 'Bispro') {
+        let siklus  = document.getElementById('siklus_bisnis').value;
+        let proses  = document.getElementById('proses_bisnis').value;
+        let tanggal = document.getElementById('tanggal').value;
+        let versi   = document.getElementById('version').value;
+        let nama    = document.getElementById('nama').value.trim();
+        
+        let tanggalObj = new Date(tanggal);
+
+        let day = String(tanggalObj.getDate()).padStart(2, '0');
+        let monthName = tanggalObj.toLocaleString('id-ID', { month: 'long' }); // "September"
+        let year = tanggalObj.getFullYear();
+
+        let formattedTanggal = `${day}${monthName}${year}`;
+        
+        // ✅ Cek apakah semua field wajib sudah diisi
+        if (!siklus || !proses || !nama || !versi || !tanggal ) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Lengkapi Data',
+                text: 'Harap isi Siklus Bisnis, Proses Bisnis, Nomor Versi, Tanggal Terbit, dan Nama Dokumen terlebih dahulu!',
+                confirmButtonText: 'OK'
+            });
+
+            this.value = '';
+
+            return;
+        }
+        
+        nomorInput.value = idToLetter(siklus) + '.' + String(proses).padStart(2, '0') + ' - ' + nama + '_R' + year + '_V' + versi + '_' + formattedTanggal;
+      }
+
+      nomorInput.disabled = false;
+  });
+
+  function random3Char() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 3; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  function idToLetter(id) {
+    let letter = '';
+    while (id > 0) {
+      id--; // shift ke 0-based
+      letter = String.fromCharCode(65 + (id % 26)) + letter;
+      id = Math.floor(id / 26); // PEMBAGIAN, bukan Math.floor(id, 26)
+    }
+    return letter;
+  }
 </script>
 
 

@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessCycle;
+use App\Models\BusinessProcess;
 use Illuminate\Http\Request;
 use App\Models\Document;
 use App\Models\DocumentDownload;
+use App\Models\DocumentType;
 use App\Models\DocumentVersion;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfReader\PdfReaderException;
@@ -103,7 +106,16 @@ class DocumentController extends Controller
 
     public function create()
     {
-        return view('pages.document.create');
+        $bpos = DB::connection('mysql_sipatra')
+            ->table('r_subdit_legal')
+            ->join('m_organisasi', 'r_subdit_legal.m_organisasi_id', '=', 'm_organisasi.id')
+            ->select('m_organisasi.id', 'm_organisasi.nama')
+            ->get();
+        $business_cycles = BusinessCycle::get();
+        $business_processes = BusinessProcess::get();
+        $document_types = DocumentType::get();
+
+        return view('pages.document.create', compact('bpos','business_cycles', 'business_processes', 'document_types'));
     }
 
     public function store(Request $request)
@@ -116,7 +128,7 @@ class DocumentController extends Controller
             'tanggal_terbit'         => 'required|date',
             'siklus_bisnis'          => 'required',
             'proses_bisnis'          => 'required',
-            'business_process_owner' => $request->jenis_document !== 'Prosedur' ? 'required' : 'nullable',
+            'business_process_owner' => $request->jenis_document !== 2 ? 'required' : 'nullable', // != Prosedur
             'jenis_document'         => 'required',
             'version'                => 'required',
             'additional_file'        => 'nullable|file|mimes:pdf,doc,docx,xlsx,ppt,pptx|max:51200',
@@ -138,18 +150,24 @@ class DocumentController extends Controller
             $filePath = $request->file('additional_file')->storeAs('additional_files', $filename, 'public');
         }
 
-        Document::create(array_merge(
-            $request->except('additional_file'),
-            [
-                'additional_file' => $filePath,
-                'created_by'      => auth()->id(),
-            ]
-        ));
+        Document::create([
+            'nomor_document'         => $request->nomor_document,
+            'nama_document'          => $request->nama_document,
+            'tanggal_terbit'         => $request->tanggal_terbit,
+            'business_cycle_id'      => $request->siklus_bisnis, 
+            'business_process_id'    => $request->proses_bisnis, 
+            'business_process_owner_id' => $request->business_process_owner,
+            'document_type_id'         => (int) $request->jenis_document,
+            'version'                => $request->version,
+            'additional_file'        => $filePath,
+            'created_by'             => auth()->id(),
+        ]);
+
 
         return redirect()->route('document')->with('success', 'Dokumen berhasil ditambahkan');
     }
 
-    public function edit($id)
+    public function edit($id, $is_edit = 1)
     {
         $document = Document::findOrFail($id);
 
@@ -158,86 +176,98 @@ class DocumentController extends Controller
             ->join('m_organisasi', 'r_subdit_legal.m_organisasi_id', '=', 'm_organisasi.id')
             ->select('m_organisasi.id', 'm_organisasi.nama')
             ->get();
+        $business_cycles = BusinessCycle::get();
+        $business_processes = BusinessProcess::get();
+        $document_types = DocumentType::get();
 
-        return view('pages.document.edit', compact('document','bpos'));
+        return view('pages.document.edit', compact('document','bpos', 'business_cycles', 'business_processes', 'document_types', 'is_edit'));
     }
 
     public function update(Request $request, $id)
     {
         $old = Document::findOrFail($id);
 
+        // Validasi input
         $request->validate([
             'nama_document'          => 'required|string',
             'nomor_document'         => 'required|string',
             'tanggal_terbit'         => 'required|date',
-            'siklus_bisnis'          => 'required|string',
-            'proses_bisnis'          => 'required|string',
-            'business_process_owner' => 'required|string',
-            'jenis_document'         => 'required|string',
+            'siklus_bisnis'          => 'required|integer',
+            'proses_bisnis'          => 'required|integer',
+            'business_process_owner_id' => 'required',
+            'jenis_document'         => 'required|integer',
             'version'                => 'required|string',
-            'additional_file'        => 'nullable|file|mimes:pdf,docx,xlsx|max:20480',
+            'additional_file'        => 'nullable|file|mimes:pdf,doc,docx,xlsx,ppt,pptx|max:51200',
         ]);
+
+        // Mapping request -> kolom database
+        $mappedData = [
+            'nomor_document'         => $request->nomor_document,
+            'nama_document'          => $request->nama_document,
+            'tanggal_terbit'         => $request->tanggal_terbit,
+            'business_cycle_id'      => $request->siklus_bisnis, 
+            'business_process_id'    => $request->proses_bisnis, 
+            'business_process_owner_id' => $request->business_process_owner,
+            'document_type_id'         => (int) $request->jenis_document,
+            'version'                => $request->version,
+        ];
 
         $versionChanged = $old->version !== $request->version;
         $fileChanged    = $request->hasFile('additional_file');
 
-        // Jika versi & file tidak berubah, update langsung record lama
-        if (!$versionChanged && !$fileChanged) {
-            $old->update($request->except(['version', 'additional_file']));
-            return redirect()->route('document')->with('success', 'Dokumen berhasil diperbarui.');
-        }
+        // Jika hanya update (tidak buat versi baru)
+        if ($request->is_edit == 1) {
+            // Jika versi & file tidak berubah, update langsung record lama
+            if (!$versionChanged && !$fileChanged) {
+                $old->update($mappedData);
+                return redirect()->route('document')->with('success', 'Dokumen berhasil diperbarui.');
+            }
 
-        $filePath = $old->additional_file;
+            // Proses file
+            $filePath = $old->additional_file;
 
-        if ($fileChanged) {
-            $file = $request->file('additional_file');
-            $filename = time().'_'.$file->getClientOriginalName();
-            $filePath = $file->storeAs('additional_files', $filename, 'public');
-        } elseif ($old->additional_file && Storage::disk('public')->exists($old->additional_file)) {
-            // salin file lama untuk versi baru
-            $newFilename = time().'_copy_'.basename($old->additional_file);
-            $newPath = 'additional_files/'.$newFilename;
-            Storage::disk('public')->copy($old->additional_file, $newPath);
-            $filePath = $newPath;
+            if ($fileChanged) {
+                $file = $request->file('additional_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('additional_files', $filename, 'public');
+            } elseif ($old->additional_file && Storage::disk('public')->exists($old->additional_file)) {
+                // Salin file lama untuk versi baru
+                $newFilename = time() . '_copy_' . basename($old->additional_file);
+                $newPath = 'additional_files/' . $newFilename;
+                Storage::disk('public')->copy($old->additional_file, $newPath);
+                $filePath = $newPath;
+            } else {
+                \Log::warning("File lama tidak ditemukan saat ingin disalin: " . $old->additional_file);
+            }
+
+            $mappedData['additional_file'] = $filePath;
+            $old->update($mappedData);
+
+            $msg = "Dokumen berhasil diupdate";
         } else {
-            \Log::error("File lama tidak ditemukan saat ingin disalin: ".$old->additional_file);
+            // Buat versi baru
+            $newData = array_merge(
+                $old->toArray(),
+                $mappedData,
+                [
+                    'parent_id'      => $old->parent_id ?? $old->id,
+                    'created_by'     => auth()->id(),
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]
+            );
+
+            unset($newData['id']); // Pastikan tidak pakai ID lama
+            unset($newData['updated_by']); // jika ada kolom ini
+
+            Document::create($newData);
+            $msg = "Versi baru berhasil ditambahkan";
         }
 
-        // buat record versi baru (parent_id terjaga)
-        Document::create(array_merge(
-            $request->except('additional_file'),
-            [
-                'additional_file' => $filePath,
-                'parent_id'       => $old->parent_id ?? $old->id,
-                'created_by'      => auth()->id(),
-            ]
-        ));
-
-        return redirect()->route('document')->with('success', 'Versi baru berhasil ditambahkan.');
+        return redirect()->route('document')->with('success', $msg);
     }
+
     
-    public function updateVersion($id)
-    {
-        $old = Document::findOrFail($id);
-
-        // buat record versi baru (parent_id terjaga)
-        Document::create([
-            'nama_document'          => $old->nama_document,
-            'nomor_document'         => $old->nomor_document,
-            'tanggal_terbit'         => now(),
-            'siklus_bisnis'          => $old->siklus_bisnis,
-            'proses_bisnis'          => $old->proses_bisnis,
-            'business_process_owner' => $old->business_process_owner ?? 'TIDAK ADA',
-            'jenis_document'         => $old->jenis_document,
-            'version'                => $old->version,
-            'additional_file'        => $old->additional_file,
-            'parent_id'              => $old->parent_id ?? $old->id,
-            'created_by'             => auth()->id(),
-        ]);
-
-        return redirect()->route('document')->with('success', 'Versi baru berhasil ditambahkan.');
-    }
-
     public function destroy($id)
     {
         $document = Document::findOrFail($id);
