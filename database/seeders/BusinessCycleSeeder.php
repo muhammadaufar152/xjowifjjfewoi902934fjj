@@ -19,6 +19,7 @@ class BusinessCycleSeeder extends Seeder
             'Planning & System Management',
             'General Affair',
             'IT Management',
+            'Inventory',
         ];
 
         foreach ($cycles as $cycle) {

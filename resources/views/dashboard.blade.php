@@ -58,7 +58,7 @@
   //   'procurement & asset management'=>'Procurement & Asset Management',
   //   'financial reporting'=>'Financial Reporting','treasury'=>'Treasury',
   //   'planning & system management'=>'Planning & System Management',
-  //   'general affair'=>'General Affair','it management'=>'IT Management',
+  //   'general affair'=>'General Affair','it management'=>'IT Management', 'inventory'=>'Inventory',
   //   // 'assurance'=>'Assurance','fulfillment'=>'Fulfillment',
   // ];
   // $labelMapType  = [
