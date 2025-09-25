@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,6 @@ class Document extends Model
         'tanggal_terbit',
         'business_cycle_id',
         'business_process_id',
-        'business_process_owner_id',
         'document_type_id',
         'status',
         'version',
@@ -104,16 +104,13 @@ class Document extends Model
               ->orWhere('bpo_uic', 'like', "%{$userEmail}%");
         });
     }
-
-    public function bpo()
-    {
-        return $this->belongsTo(
-            related: BusinessProcessOwner::class,
-            foreignKey: 'business_process_owner_id',
-            ownerKey: 'id'
-        );
-    }
     
+    // Relasi many-to-many ke BusinessProcessOwner
+    public function businessProcessOwners(): BelongsToMany
+    {
+        return $this->belongsToMany(BusinessProcessOwner::class, 'document_business_process_owner', 'document_id', 'business_process_owner_id');
+    }
+
     public function businessCycle()
     {
         return $this->belongsTo(
